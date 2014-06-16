@@ -59,7 +59,7 @@ from kivy.uix.label import Label
 from kivy.uix.stencilview import StencilView
 from kivy.properties import NumericProperty, BooleanProperty,\
     BoundedNumericProperty, StringProperty, ListProperty, ObjectProperty,\
-    DictProperty, AliasProperty
+    DictProperty, AliasProperty, DequeProperty
 from kivy.clock import Clock
 from kivy.graphics import Mesh, Color, Rectangle
 from kivy.graphics import Fbo
@@ -131,6 +131,8 @@ class Graph(Widget):
     label_options = DictProperty()
     '''Label options that will be passed to `:class:`kivy.uix.Label`.
     '''
+
+    rotate_ylabel = BooleanProperty()
 
     def __init__(self, **kwargs):
         super(Graph, self).__init__(**kwargs)
@@ -497,7 +499,11 @@ class Graph(Widget):
 
         if self.ylabel:
             if not self._ylabel:
-                ylabel = RotateLabel(font_size=font_size, **self.label_options)
+                ylabel = None
+                if self.rotate_ylabel:
+                    ylabel = RotateLabel(font_size=font_size, **self.label_options)
+                else:
+                    ylabel = Label(font_size=font_size, **self.label_options)
                 self.add_widget(ylabel)
                 self._ylabel = ylabel
         else:
@@ -874,7 +880,7 @@ class MeshLinePlot(Plot):
     def create_drawings(self):
         self._color = Color(*self.color)
         self._mesh = Mesh(mode='line_strip')
-        self.bind(color=lambda instr, value: setattr(self._color.rgba, value))
+        self.bind(color=lambda instr, value: setattr(self._color, "rgba", value))
         return [self._color, self._mesh]
 
     def draw(self, *args):
@@ -897,7 +903,7 @@ class MeshLinePlot(Plot):
         elif diff > 0:
             ind.extend(range(len(ind), len(ind) + diff))
             vert.extend([0] * (diff * 4))
-        for k in range(len(points)):
+        for k in xrange(len(points)):
             vert[k * 4] = (funcx(points[k][0]) - xmin) * ratiox + size[0]
             vert[k * 4 + 1] = (funcy(points[k][1]) - ymin) * ratioy + size[1]
         mesh.vertices = vert
